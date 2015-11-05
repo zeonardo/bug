@@ -1,2 +1,2 @@
 # bug
-Arthropod rpg game project
+Arthropod rpg project
