@@ -1,0 +1,30 @@
+Fighter	Scorpion: Chaotic Neutral
+Attack	Defense	Stamina	Agility	Power
+
+Paladin	Beetle: Lawful Neautral
+Defense	Stamina	Power	Attack	Agility
+
+Cleric	Butterfly: Lawful Good
+Stamina	Power	Agility	Defense	Attack
+
+Wizard	Bee: Neutral Good
+Power	Agility	Attack	Stamina	Defense
+
+Rogue	Spider: Chaotic Evil
+Agility	Attack	Defense	Power	Stamina
+-----------------------------------------------------------
+Ranger		???:	???
+Barbarian	Ant:	???
+Sorcerer
+Favored Soul
+Bard		Cicada
+Druid		
+Monk		Mantis:
+
+Chaotic - DPS - Attack > Power: Temperamental, Opportunistic
+Lawful - Tank - Defense > Agility: Just, Adamant
+Neutral - Support - Stamina: Indifferent, Coherent
+
+Good - Tank - Power > Attack: Peaceful, Helpful
+Evil - DPS - Agility > Defense: Vicious, Deadly
+Neutral - Support - Stamina: Analytical, Stable

@@ -1,0 +1,11 @@
+JS-OOP
+http://www.ibm.com/developerworks/library/wa-objectorientedjs
+
+Phaser
+http://phaser.io/
+
+Phaser sample
+http://tutorialzine.com/2015/06/making-your-first-html5-game-with-phaser
+
+Character Alignment
+https://en.wikipedia.org/wiki/Alignment_(Dungeons_%26_Dragons)
