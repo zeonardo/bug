@@ -7,9 +7,9 @@
         var config, environment, errorHandler, name, open, pkg, taskArray, taskName, tasks, verbose, _results;
 
         pkg = grunt.file.readJSON('package.json');
-        environment = process.env.VTEX_HOST || 'vtexcommercestable';
+        //environment = process.env.VTEX_HOST || 'vtexcommercestable';
         verbose = grunt.option('verbose');
-        open = pkg.accountName ? 'http://' + pkg.accountName + '.vtexlocal.com.br/?debugcss=true&debugjs=true' : void 0;
+        open = pkg.accountName ? 'http://' + pkg.accountName + '.com.br/?debugcss=true&debugjs=true' : void 0;
 
         errorHandler = function(err, req, res, next) {
             var errString, _ref, _ref1;
@@ -20,6 +20,43 @@
         config = {
             clean: {
                 main: ['build']
+            },
+            preprocess: {
+                options: {
+                    context: {
+                        DEBUG: true
+                    }
+                },
+                // html: {
+                //     src: 'src/index.html',
+                //     dest: 'src/index.processed.html'
+                // },
+                js: {
+                    src: 'src/scripts/core.js',
+                    dest: 'src/scripts/_core.js'
+                },
+                // multifile: {
+                //     files: {
+                //         'test/test.processed.html': 'test/test.html',
+                //         'test/test.processed.js': 'test/test.js'
+                //     }
+                // },
+                // inline: {
+                //     src: ['processed/**/*.js'],
+                //     options: {
+                //         inline: true,
+                //         context: {
+                //             DEBUG: false
+                //         }
+                //     }
+                // },
+                // all_from_dir: {
+                //     src: '**/*.tmpl',
+                //     ext: '.html',
+                //     cwd: 'src',
+                //     dest: 'build',
+                //     expand: true
+                // }
             },
             copy: {
                 main: {
@@ -54,22 +91,9 @@
                 },
                 main: {
                     files: [{
-                        expand: true,
-                        cwd: 'src/vendor/bower_components/modernizr/',
-                        src: ['modernizr.js'],
-                        dest: 'build/arquivos'
-                    }, {
-                        'build/arquivos/general-motos.min.js': [
-                            'src/vendor/bower_components/slick.js/slick/slick.min.js',
-                            'src/scripts/general-motos.js',
-                            'src/scripts/app/constructors/**/*.js',
-                            'src/scripts/app/modules/**/*.js',
-                            'src/scripts/app/pages/**/*.js',
-                            'src/scripts/app/*.js'
-                        ]
-                    }, {
-                        'build/arquivos/vtex-smartResearch.min.js': [
-                            'src/scripts/vendor/vtex-smartResearch.dev.js'
+                        'build/files/bug.min.js': [
+                            'src/scripts/core.js',
+                            'src/scripts/character/*/*.js'
                         ]
                     }]
                 }
@@ -77,27 +101,23 @@
             concat: {
                 dist: {
                   src: [
-                    'bower-components/slick.js/slick/slick.min.js',
-                    'src/scripts/general-motos.js',
-                    'src/scripts/app/constructors/**/*.js',
-                    'src/scripts/app/modules/**/*.js',
-                    'src/scripts/app/pages/**/*.js',
-                    'src/scripts/app/*.js'
+                    'src/scripts/core.js',
+                    'src/scripts/character/*/*.js'
                   ],
-                  dest: 'build/arquivos/general-motos.dev.js'
+                  dest: 'build/arquivos/bug.dev.js'
                 },
             },
-            imagemin: {
+            /*imagemin: {
                 main: {
                     files: [{
                         expand: true,
                         cwd: 'src/images',
                         src: ['*.{png,jpg,gif}'],
-                        dest: 'build/arquivos/'
+                        dest: 'build/files/'
                     }]
                 }
-            },
-            connect: {
+            },*/
+            /*connect: {
                 http: {
                     options: {
                         hostname: '*',
@@ -121,25 +141,28 @@
                         ]
                     }
                 }
-            },
+            },*/
             watch: {
-                options: {
+                /*options: {
                     livereload: true
-                },
-                images: {
-                    files: ['src/**/*.{png,jpg,gif}'],
-                    tasks: ['imagemin']
-                },
-                css: {
-                    files: ['build/**/*.css']
-                },
+                },*/
+                // images: {
+                //     files: ['src/**/*.{png,jpg,gif}'],
+                //     tasks: ['imagemin']
+                // },
                 main: {
                     files: ['src/**/*.html', 'src/**/*.css'],
                     tasks: ['copy']
                 },
+                css: {
+                    files: ['build/**/*.css']
+                },
                 js: {
-                    files: ['src/scripts/**/*.js'],
-                    tasks: ['uglify']
+                    files: [
+                        'src/scripts/**/*.js',
+                        '!**/_core.js'
+                    ],
+                    tasks: ['preprocess','uglify']
                 },
                 compass: {
                     files: ['src/styles/**/*.scss'],
@@ -151,14 +174,10 @@
             }
         };
         tasks = {
-            build: ['clean', 'compass', 'imagemin', 'uglify'],
+            build: ['clean', 'compass', 'preprocess', 'uglify'],
             devJs: ['concat'],
-            'default': ['build', 'connect', 'watch'],
+            'default': ['build', 'watch'],
             devoff: ['build', 'watch']
-            // devmin: ['build', 'min', 'connect:http:keepalive']
-            // min: ['uglify', 'cssmin'],
-            // dist: ['build', 'min'],
-            // test: [],
         };
 
         grunt.initConfig(config);
