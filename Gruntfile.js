@@ -63,8 +63,14 @@
                     files: [{
                         expand: true,
                         cwd: 'src/',
-                        src: ['**', '!**/*.sass', '!**/*.scss'],
+                        src: ['**', '!**/*.js', '**/_*.js', '!**/*.sass', '!**/*.scss'],
                         dest: 'build/'
+                    },
+                    {
+                        expand: true,
+                        cwd: 'resources/',
+                        src: ['createjs-2015.05.21.min.js'],
+                        dest: 'build/resources/'
                     }]
                 }
             },
@@ -76,11 +82,21 @@
                 }
             },
             cssmin: {
-                main: {
-                    expand: true,
-                    cwd: 'src/styles/',
-                    src: ['*.css'],
-                    dest: 'build/'
+                options: {
+                    shorthandCompacting: false,
+                    roundingPrecision: -1
+                },
+                // main: {
+                //     expand: true,
+                //     cwd: 'src/styles/',
+                //     src: ['**/*.css', '!**/*.min.css'],
+                //     dest: 'build/styles',
+                //     ext: '.min.css'
+                // },
+                target: {
+                    files: [{
+                        'build/styles/bug.css': ['build/styles/*.css']
+                    }]
                 }
             },
             uglify: {
@@ -91,7 +107,7 @@
                 },
                 main: {
                     files: [{
-                        'build/files/bug.min.js': [
+                        'build/scripts/bug.min.js': [
                             'src/scripts/core.js',
                             'src/scripts/character/*/*.js'
                         ]
@@ -104,7 +120,7 @@
                     'src/scripts/core.js',
                     'src/scripts/character/*/*.js'
                   ],
-                  dest: 'build/arquivos/bug.dev.js'
+                  dest: 'build/bug.dev.js'
                 },
             },
             /*imagemin: {
@@ -150,10 +166,10 @@
                 //     files: ['src/**/*.{png,jpg,gif}'],
                 //     tasks: ['imagemin']
                 // },
-                main: {
-                    files: ['src/**/*.html', 'src/**/*.css'],
-                    tasks: ['copy']
-                },
+                // main: {
+                //     files: ['src/**/*.html', 'src/**/*.css', 'src/**/*.css'],
+                //     tasks: ['copy']
+                // },
                 css: {
                     files: ['build/**/*.css']
                 },
@@ -174,7 +190,7 @@
             }
         };
         tasks = {
-            build: ['clean', 'compass', 'preprocess', 'uglify'],
+            build: ['clean', 'compass', 'cssmin', 'preprocess', 'uglify', 'copy'],
             devJs: ['concat'],
             'default': ['build', 'watch'],
             devoff: ['build', 'watch']

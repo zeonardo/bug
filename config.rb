@@ -2,12 +2,12 @@
 
 # Set this to the root of your project when deployed:
 http_path = "/"
-css_dir = "build/files"
-sass_dir = "src/styles/"
-images_dir = "build/files"
+css_dir = "build/styles"
+sass_dir = "src/styles"
+images_dir = "build/images"
 images_path = "src/images"
 http_images_path = "/src/images"
-http_generated_images_path = "/files"
+http_generated_images_path = "/images"
 javascripts_dir = "src/scripts"
 fonts_dir = "src/fonts"
 
@@ -16,7 +16,7 @@ fonts_dir = "src/fonts"
 output_style = :compressed
 
 # To enable relative paths to assets via compass helper functions. Uncomment:
-relative_assets = false
+# relative_assets = false
 
 # To disable debugging comments that display the original location of your selectors. Uncomment:
 # line_comments = false

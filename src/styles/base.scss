@@ -1,0 +1,15 @@
+@-ms-viewport{
+  width: device-width;
+}
+html{
+	min-height: 100%;
+}
+body{
+	min-height: 100%;
+	position: relative;
+}
+#cnv_main{
+	display: block;
+	width: 100%;
+	height: 100%;
+}
