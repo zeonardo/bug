@@ -1,23 +1,13 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <title></title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link  href="build/styles/bug.css" rel="stylesheet" type="text/css">
     <script src="build/resources/createjs-2015.05.21.min.js"></script>
-    <script src="build/scripts/bug.min.js"></script>
-    <script>      
-      function init() {
-        var stage = new createjs.Stage("cnv_main");
-        var circle = new createjs.Shape();
-        circle.graphics.beginFill("DeepSkyBlue").drawCircle(0, 0, 50);
-        circle.x = 100;
-        circle.y = 100;
-        stage.addChild(circle);
-        stage.update();
-      }
-    </script>
   </head>
-  <body id="bug" onload="init();">
+  <body id="bug">
     <canvas id="cnv_main"></canvas>
+    <script src="build/scripts/bug.min.js"></script>
   </body>
 </html>

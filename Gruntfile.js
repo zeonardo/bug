@@ -182,7 +182,7 @@
                 },
                 compass: {
                     files: ['src/styles/**/*.scss'],
-                    tasks: ['compass']
+                    tasks: ['compass', 'cssmin']
                 },
                 grunt: {
                     files: ['Gruntfile.js']
