@@ -68,7 +68,7 @@
     bar.graphics
 	    .beginFill(bar.outColor)
 	    .drawRect(0, 500, window.game.stage.width, 100)
-	    .endFill();// ( [x=0]  [y=0]  [width=0]  [height=0] )
+	    .endFill();//( [x=0]  [y=0]  [width=0]  [height=0] )
     stage.addChild(bar);
 
     var specials  = [1, 2, 3, 4, 5];
