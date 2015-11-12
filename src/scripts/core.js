@@ -2,6 +2,7 @@
 	window.debug = true;
 	window.game = {};
 	window.game.core = {};
+	window.game.day = true;
 	window.game.language = {
 		available: [
 			{
@@ -38,7 +39,15 @@
     sky.overColor = "#3281FF";//??
     sky.outColor = "#82E0FF";
     sky.graphics
-	    .beginFill(sky.outColor)
+    	/*
+    	colors Array: An array of CSS compatible color values. For example, ["#F00","#00F"] would define a gradient drawing from red to blue.
+		ratios Array: An array of gradient positions which correspond to the colors. For example, [0.1, 0.9] would draw the first color to 10% then interpolating to the second color at 90%.
+		x0 Number: The position of the first point defining the line that defines the gradient direction and size.
+		y0 Number: The position of the first point defining the line that defines the gradient direction and size.
+		x1 Number: The position of the second point defining the line that defines the gradient direction and size.
+		y1 Number: The position of the second point defining the line that defines the gradient direction and size.
+    	*/
+	    .beginLinearGradientFill(["#000066","#3385FF", "#9C9CFF"], [0, 0.7, 1], 0, 100, 0, 400)
 	    .drawRect(0, 0, window.game.stage.width, 400)
 	    .endFill();// ( [x=0]  [y=0]  [width=0]  [height=0] )
     stage.addChild(sky);
@@ -46,8 +55,8 @@
     // bg
     var circle = new createjs.Shape();
     circle.graphics.beginFill("#FFCC00").drawCircle(0, 0, 50);
-    circle.x = window.game.stage.width;
-    circle.y = 100;
+    circle.x = window.game.stage.width - 50;
+    circle.y = 400 + 50;
     stage.addChild(circle);
 
     // land
@@ -99,11 +108,15 @@
 	//Update stage will render next frame
     createjs.Ticker.addEventListener("tick", handleTick);
 
-    function handleTick() {
+    function handleTick(e) {
      //Circle will move 10 units to the right.
-        circle.x -= 1;
         //Will cause the circle to wrap back
-        if (circle.x < -100) { circle.x = window.game.stage.width; }
+        var sunSpeed = 0.01;
+        var sunDial = parseFloat(((circle.y) * sunSpeed) / 100);
+        circle.x -= sunSpeed;
+        if (circle.x < 50) { circle.x = window.game.stage.width - 50; circle.y = 450;}
+        if (circle.x > (window.game.stage.width / 2)) { circle.y = circle.y - sunDial; }
+        else{circle.y = parseFloat(circle.y + sunDial)}
 
         //Circle will move 10 units to the right.
         star.x += 5;
@@ -115,7 +128,12 @@
         //Will cause the circle to wrap back
         if (text.x < 0) { text.x = stage.canvas.width; }
 
-        stage.update();
+        if (game.day){
+        }
+        else{
+        }
+
+        stage.update(e);
     }
 })();
 
