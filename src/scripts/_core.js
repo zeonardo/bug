@@ -2,15 +2,92 @@
 	window.debug = true;
 	window.game = {};
 	window.game.core = {};
-	window.game.day = true;
+
+
+	window.game.environment = {};
+	window.game.environment.fps = 30;
+	window.game.environment.cycle = {
+    	started: false,
+		duration: 60000,
+		morning: false,
+		noon: false,
+		evening: false,
+		twilight: false,
+		get day(){ return this.morning || this.noon; },
+		get night(){ return this.evening || this.twilight; },
+		start: function(period){
+			if(!this.started){
+				this.started = true;
+			}
+			this.clock = function(period){
+				switch(period){
+					case 1:
+						morning();
+						break;
+					case 2:
+						noon();
+						break;
+					case 3:
+						evening();
+						break;
+					default: //4
+						twilight();
+						period = 0;
+						break;
+				}
+				function morning(){
+					this.morning = true;
+					this.twilight = false;
+					window.game.environment.circle.command.style = '#FFCC00';
+					debug && console.log('morning');
+				}
+				function noon(){
+					this.noon = true;
+					this.morning = false;
+					window.game.environment.circle.command.style = '#FFFF41';
+					debug && console.log('noon');
+				}
+				function evening(){
+					this.evening = true;
+					this.noon = false;
+					window.game.environment.circle.command.style = '#E4E4E4';
+					debug && console.log('evening');
+				}
+				function twilight(){
+					this.twilight = true;
+					this.evening = false;
+					window.game.environment.circle.command.style = '#FFFFFF';
+					debug && console.log('twilight');
+				}
+				//alert('change: ' + period);
+				setTimeout(function(){
+					period++;
+					window.game.environment.cycle.clock(period);
+				}, (this.duration / 2));
+			}
+			this.clock(1);
+		}
+	};
+	debug && (window.game.environment.cycle.duration /= 4);
+
+	window.game.environment.ticker = createjs.Ticker;
+    window.game.environment.ticker.addEventListener("tick", environmentTick);
+    window.game.environment.ticker.setFPS(window.game.environment.fps);
+    window.game.environment.ticker.maxDelta = window.game.environment.fps + (window.game.environment.fps / 2);
+
 	window.game.language = {
 		available: [
 			{
 				name: 'English',
-				code: 'enus'	
+				code: 'enus'
+			},
+			{
+				name: 'Português',
+				code: 'ptbr'
 			}
 		]
 	};
+
 
 	window.game.language.default = window.game.language.available[0];
 
@@ -20,67 +97,139 @@
 	stage = window.game.stage;
 	stage.width = 800;
 	stage.height = 600;
-    
-
-    var star = new createjs.Shape();
-    star.graphics.beginFill("red").drawPolyStar(100, 0, 50, 5, 0.6, -90);
-    star.x = 50;
-    star.y = 50;
-    //stage.addChild(star);
-
-	var text = new createjs.Text("Hello World", "20px Arial", "#ff7700");
-	text.x = 100;
-	text.y = 50;
-	text.textBaseline = "alphabetic";
-	//stage.addChild(text);
-
-    // sky
-	var sky = new createjs.Shape();
-    sky.overColor = "#3281FF";//??
-    sky.outColor = "#82E0FF";
-    sky.graphics
-    	/*
-    	colors Array: An array of CSS compatible color values. For example, ["#F00","#00F"] would define a gradient drawing from red to blue.
-		ratios Array: An array of gradient positions which correspond to the colors. For example, [0.1, 0.9] would draw the first color to 10% then interpolating to the second color at 90%.
-		x0 Number: The position of the first point defining the line that defines the gradient direction and size.
-		y0 Number: The position of the first point defining the line that defines the gradient direction and size.
-		x1 Number: The position of the second point defining the line that defines the gradient direction and size.
-		y1 Number: The position of the second point defining the line that defines the gradient direction and size.
-    	*/
-	    .beginLinearGradientFill(["#000066","#3385FF", "#9C9CFF"], [0, 0.7, 1], 0, 100, 0, 400)
-	    .drawRect(0, 0, window.game.stage.width, 400)
-	    .endFill();// ( [x=0]  [y=0]  [width=0]  [height=0] )
-    stage.addChild(sky);
-
-    // bg
-    var circle = new createjs.Shape();
-    circle.graphics.beginFill("#FFCC00").drawCircle(0, 0, 50);
-    circle.x = window.game.stage.width - 50;
-    circle.y = 400 + 50;
-    stage.addChild(circle);
-
-    // land
-    var land = new createjs.Shape();
-    land.overColor = "#3281FF";//??
-    land.outColor = "#33CC33";
-    land.graphics
-	    .beginFill(land.outColor)
-	    .drawRect(0, 400, window.game.stage.width, 100)
-	    .endFill();// ( [x=0]  [y=0]  [width=0]  [height=0] )
-    stage.addChild(land);
 
 
 	//UI bar
-	var bar = new createjs.Shape();
-    bar.overColor = "#3281FF";
-    bar.outColor = "#FF0000";
-    bar.graphics
-	    .beginFill(bar.outColor)
-	    .drawRect(0, 500, window.game.stage.width, 100)
-	    .endFill();//( [x=0]  [y=0]  [width=0]  [height=0] )
-    stage.addChild(bar);
+	game.environment.bar = {
+		index: 3,
+    	width: window.game.stage.width,
+    	height: 100,
+    	x: 0,
+    	get y() { return window.game.stage.height - this.height; },
+    	color: '#FF0000',
+    	ui: new createjs.Shape(),
+    	render: function(){
+		    this.ui.outColor = this.color;
+		    this.ui.graphics
+			    .beginFill(this.ui.outColor)
+			    .drawRect(this.x, this.y, this.width, this.height)
+			    .endFill();//( [x=0]  [y=0]  [width=0]  [height=0] )
+		    game.stage.addChild(this.ui);
+    	}
+    };
 
-    var specials  = [1, 2, 3, 4, 5];
+    // land
+    game.environment.land = {
+    	index: 2,
+    	width: window.game.stage.width,
+    	height: 100,
+    	x: 0,
+    	get y() { return window.game.stage.height - window.game.environment.bar.height - this.height; },
+    	color: '#33CC33',
+    	ui: new createjs.Shape(),
+    	render: function(){
+		    this.ui.graphics
+			    .beginFill(this.color)
+			    .drawRect(this.x, this.y, this.width, this.height)
+			    .endFill();// ( [x=0]  [y=0]  [width=0]  [height=0] )
+		    game.stage.addChild(this.ui);
+    	}
+    };
+
+    // sky
+    game.environment.sky = {
+    	index: 0,
+    	width: window.game.stage.width,
+    	get height() { return window.game.stage.height - window.game.environment.bar.height - window.game.environment.land.height; },
+    	x: 0,
+    	y: 0,
+    	color: ["#000066","#3385FF", "#9C9CFF"],
+    	ui: new createjs.Shape(),
+	    render: function(){
+	    	this.ui.graphics
+	    	/*
+	    	colors Array: An array of CSS compatible color values. For example, ["#F00","#00F"] would define a gradient drawing from red to blue.
+			ratios Array: An array of gradient positions which correspond to the colors. For example, [0.1, 0.9] would draw the first color to 10% then interpolating to the second color at 90%.
+			x0 Number: The position of the first point defining the line that defines the gradient direction and size.
+			y0 Number: The position of the first point defining the line that defines the gradient direction and size.
+			x1 Number: The position of the second point defining the line that defines the gradient direction and size.
+			y1 Number: The position of the second point defining the line that defines the gradient direction and size.
+	    	*/
+		    .beginLinearGradientFill(this.color, [0, 0.7, 1], 0, 100, 0, this.height)
+		    .drawRect(this.x, this.y, this.width, this.height)
+		    .endFill();// ( [x=0]  [y=0]  [width=0]  [height=0] )
+	    	game.stage.addChild(this.ui);
+	    }
+    };
+
+
+    // bg
+    game.environment.circle = {
+    	index: 1,
+    	width: 100,
+    	height: 100,
+    	get x(){ return (window.game.stage.width - (this.width / 2)); },
+    	get y(){ return (window.game.environment.sky.height + (this.height / 2)); },
+    	color: '#FFCC00',
+    	ui: new createjs.Shape(),
+    	render: function(){
+
+		    var _this = this;
+		    this.path = {
+				index: _this.index - 1,
+	    		get x_start(){ return (_this.width / 4); },
+				get x_end(){ return (window.game.stage.width - (_this.width / 4)); },
+				y_start: window.game.environment.sky.height + (_this.height / 2),
+				y_end: window.game.environment.sky.height + (_this.height / 2),
+				ui: new createjs.Shape(),
+				render: function(){
+					var trajectory = new createjs.Shape();
+					// .moveTo(0,0)
+					// .curveTo(0,200,200,200)
+					// .curveTo(200,0,0,0);
+					trajectory.graphics.beginStroke("#666")
+						.moveTo(this.x_end, this.y_end)
+						.curveTo(this.y_end, -300, this.x_start, this.y_start);
+					game.stage.addChild(trajectory);
+				},
+				animate: function(){
+					createjs.MotionGuidePlugin.install();
+					createjs.Tween.get(_this.ui, {loop:true})
+					.to({
+						guide:{
+							path:[
+								this.x_end, this.y_end,
+								this.y_end, -300, this.x_start, this.y_start
+							]
+						}
+					}, window.game.environment.cycle.duration);
+				}
+	    	};
+
+		    debug && this.path.render();
+
+		    this.command = this.ui.graphics.beginFill("#FFCC00").command;
+		    this.ui.graphics.drawCircle(0, 0, (this.width / 2));
+		    this.ui.x = this.x;
+		    this.ui.y = this.y;
+		    game.stage.addChild(this.ui);
+
+		    this.path.animate();
+    	}
+    };
+
+    game.environment.sky.render();
+    game.environment.circle.render();
+    game.environment.land.render();
+    game.environment.bar.render();
+
+	var text = new createjs.Text("debug", "12px Arial", "#fff");
+	text.x = game.stage.width - 40;
+	text.y = game.stage.height - 5;
+	text.textBaseline = "alphabetic";
+	debug && stage.addChild(text);
+
+    var specials  = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
     var color = '#3281FF';
 
     var slotPaddingX = 10;
@@ -101,39 +250,14 @@
 	    slotX += (slotPaddingX + slotWidth);
     };
 
+	//game.stage.update();
 
 
-	stage.update();
+    function environmentTick(e) {
 
-	//Update stage will render next frame
-    createjs.Ticker.addEventListener("tick", handleTick);
+        !window.game.environment.cycle.started && (window.game.environment.cycle.start());
 
-    function handleTick(e) {
-     //Circle will move 10 units to the right.
-        //Will cause the circle to wrap back
-        var sunSpeed = 0.01;
-        var sunDial = parseFloat(((circle.y) * sunSpeed) / 100);
-        circle.x -= sunSpeed;
-        if (circle.x < 50) { circle.x = window.game.stage.width - 50; circle.y = 450;}
-        if (circle.x > (window.game.stage.width / 2)) { circle.y = circle.y - sunDial; }
-        else{circle.y = parseFloat(circle.y + sunDial)}
-
-        //Circle will move 10 units to the right.
-        star.x += 5;
-        //Will cause the circle to wrap back
-        if (star.x > stage.canvas.width) { star.x = 0; }
-
-        //Circle will move 10 units to the right.
-        text.x -= 7;
-        //Will cause the circle to wrap back
-        if (text.x < 0) { text.x = stage.canvas.width; }
-
-        if (game.day){
-        }
-        else{
-        }
-
-        stage.update(e);
+        game.stage.update(e);
     }
 })();
 
