@@ -2,73 +2,130 @@
 	window.debug = true;
 	window.game = {};
 	window.game.core = {};
+	window.game.core.grid = {
+        dimension: 10,
+        render: function(){
+            var x_start = x_end = 0;
+            var y_start = y_end = 0;
+            var width = (window.game.stage.width / this.dimension);
+            var height = (window.game.stage.height / this.dimension);
 
+
+            var trajectory;
+        	// grid
+            while(x_end < window.game.stage.width && y_end < window.game.stage.height){
+                x_end = x_start + width;
+                y_end = y_start + height;
+
+                trajectory = new createjs.Shape();
+                trajectory.graphics.beginStroke("#999").drawRect(x_start, y_start, x_end, y_end);
+                trajectory.alpha = 0.3;
+                game.stage.addChild(trajectory);
+
+                if (x_end + width >= window.game.stage.width){//new line
+                    x_start = 0;
+                    y_start = y_end;
+                }
+                else{
+                    x_start += width;
+                }
+            }
+
+            // vertical center
+            trajectory = new createjs.Shape();
+            trajectory.graphics.beginStroke("#fff").drawRect((window.game.stage.width / 2), 0, (window.game.stage.width / 2), window.game.stage.height);
+            trajectory.alpha = 0.3;
+            game.stage.addChild(trajectory);
+
+            // horizontal center
+            trajectory = new createjs.Shape();
+            trajectory.graphics.beginStroke("#fff").drawRect(0, (window.game.stage.height / 2), window.game.stage.width, (window.game.stage.height / 2));
+            trajectory.alpha = 0.3;
+            game.stage.addChild(trajectory);
+        }
+    };
 
 	window.game.environment = {};
 	window.game.environment.fps = 30;
 	window.game.environment.cycle = {
     	started: false,
 		duration: 60000,
-		morning: false,
-		noon: false,
-		evening: false,
-		twilight: false,
-		get day(){ return this.morning || this.noon; },
-		get night(){ return this.evening || this.twilight; },
-		start: function(period){
+		days: 0,
+		start: function(){
+			this.ismorning = true;
+			this.isnoon = false;
+			this.isevening = false;
+			this.istwilight = false;
+
+			this.isday = function(){
+				return this.ismorning || this.isnoon;
+			};
+			this.isrise = function(){
+				return this.ismorning || this.isevening;
+			};
+
+			this.morning = function(){
+				window.game.environment.circle.command.style = '#FFCC00';
+				debug && console.log('morning');
+			};
+			this.noon = function(){
+				window.game.environment.circle.command.style = '#FFFF41';
+				debug && console.log('noon');
+			};
+			this.evening = function(){
+				window.game.environment.circle.command.style = '#E4E4E4';
+				debug && console.log('evening');
+			};
+			this.twilight = function(){
+				window.game.environment.circle.command.style = '#FFFFFF';
+				debug && console.log('twilight');
+			};
+			this.started = true;
+			debug && console.log('cycle started');
+		},
+		change: function(event){
+			window.game.environment.cycle.ismorning = window.game.environment.cycle.istwilight;
+			window.game.environment.cycle.isevening = window.game.environment.cycle.isnoon;
+			window.game.environment.cycle.isnoon = false;
+			window.game.environment.cycle.istwilight = false;
+
+			if (window.game.environment.cycle.morning){
+				window.game.environment.cycle.days++;	
+			}
+
+			debug && console.log((window.game.environment.cycle.isday() ? 'day: ' : 'night: ') + window.game.environment.cycle.days);
+		},
+		update: function(){
 			if(!this.started){
-				this.started = true;
+				this.start();
 			}
-			this.clock = function(period){
-				switch(period){
-					case 1:
-						morning();
-						break;
-					case 2:
-						noon();
-						break;
-					case 3:
-						evening();
-						break;
-					default: //4
-						twilight();
-						period = 0;
-						break;
+
+			this.circle_rising = game.environment.circle.ui.globalToLocal(window.game.stage.width - game.environment.circle.radius-1, 0);
+	        this.circle_peak = game.environment.circle.ui.globalToLocal((window.game.stage.width / 2), 0);
+	        this.circle_setting = game.environment.circle.ui.globalToLocal(game.environment.circle.radius-1, 0);
+			
+			if (game.environment.circle.ui.hitTest(this.circle_rising.x, 0)) {
+			    console.log((this.isday() ? 'sun' : 'moon') + ' rising');
+			} else if (game.environment.circle.ui.hitTest(this.circle_peak.x, 0)) {
+				if(this.isrise()){
+				    this.isnoon = this.ismorning;
+				    this.istwilight = this.isevening;
+				    this.ismorning = false;
+				    this.isevening = false;
+				    console.log('mid' + (this.isnoon ? 'day' : 'night'));
 				}
-				function morning(){
-					this.morning = true;
-					this.twilight = false;
-					window.game.environment.circle.command.style = '#FFCC00';
-					debug && console.log('morning');
-				}
-				function noon(){
-					this.noon = true;
-					this.morning = false;
-					window.game.environment.circle.command.style = '#FFFF41';
-					debug && console.log('noon');
-				}
-				function evening(){
-					this.evening = true;
-					this.noon = false;
-					window.game.environment.circle.command.style = '#E4E4E4';
-					debug && console.log('evening');
-				}
-				function twilight(){
-					this.twilight = true;
-					this.evening = false;
-					window.game.environment.circle.command.style = '#FFFFFF';
-					debug && console.log('twilight');
-				}
-				//alert('change: ' + period);
-				setTimeout(function(){
-					period++;
-					window.game.environment.cycle.clock(period);
-				}, (this.duration / 2));
 			}
-			this.clock(1);
+			else if (game.environment.circle.ui.hitTest(this.circle_setting.x, 0)) {
+			    console.log((this.isday() ? 'sun' : 'moon') + ' setting');
+			}
+
+			// this.ismorning && this.morning();
+			// this.isnoon && this.noon();
+			// this.isevening && this.evening();
+			// this.istwilight && this.twilight();
 		}
 	};
-	debug && (window.game.environment.cycle.duration /= 4);
+	//debug && (window.game.environment.cycle.duration /= 8);
 
 	window.game.environment.ticker = createjs.Ticker;
     window.game.environment.ticker.addEventListener("tick", environmentTick);
@@ -89,7 +146,7 @@
 	};
 
 
-	window.game.language.default = window.game.language.available[0];
+	window.game.language.main = window.game.language.available[0];
 
 	window.game.text = {};
 	
@@ -168,8 +225,9 @@
     	index: 1,
     	width: 100,
     	height: 100,
-    	get x(){ return (window.game.stage.width - (this.width / 2)); },
-    	get y(){ return (window.game.environment.sky.height + (this.height / 2)); },
+    	get radius(){ return (this.width / 2); },
+    	get x(){ return (window.game.stage.width - this.radius); },
+    	get y(){ return (window.game.environment.sky.height + this.radius); },
     	color: '#FFCC00',
     	ui: new createjs.Shape(),
     	render: function(){
@@ -177,39 +235,39 @@
 		    var _this = this;
 		    this.path = {
 				index: _this.index - 1,
-	    		get x_start(){ return (_this.width / 4); },
-				get x_end(){ return (window.game.stage.width - (_this.width / 4)); },
+	    		get x_start(){ return (0); },
+				get x_end(){ return (window.game.stage.width); },
 				y_start: window.game.environment.sky.height + (_this.height / 2),
 				y_end: window.game.environment.sky.height + (_this.height / 2),
+				get curve_start(){ return (window.game.stage.width / 2);},
+				get curve_end(){ return (this.curve_start - window.game.stage.width); },
 				ui: new createjs.Shape(),
 				render: function(){
 					var trajectory = new createjs.Shape();
-					// .moveTo(0,0)
-					// .curveTo(0,200,200,200)
-					// .curveTo(200,0,0,0);
 					trajectory.graphics.beginStroke("#666")
 						.moveTo(this.x_end, this.y_end)
-						.curveTo(this.y_end, -300, this.x_start, this.y_start);
+						.curveTo(this.curve_start, this.curve_end, this.x_start, this.y_start);
 					game.stage.addChild(trajectory);
 				},
 				animate: function(){
 					createjs.MotionGuidePlugin.install();
-					createjs.Tween.get(_this.ui, {loop:true})
+					createjs.Tween.get(_this.ui, { loop:true })
 					.to({
 						guide:{
 							path:[
 								this.x_end, this.y_end,
-								this.y_end, -300, this.x_start, this.y_start
+								this.curve_start, this.curve_end, this.x_start, this.y_start
 							]
 						}
-					}, window.game.environment.cycle.duration);
+					}, window.game.environment.cycle.duration)
+					.call(window.game.environment.cycle.change);
 				}
 	    	};
 
 		    debug && this.path.render();
 
 		    this.command = this.ui.graphics.beginFill("#FFCC00").command;
-		    this.ui.graphics.drawCircle(0, 0, (this.width / 2));
+		    this.ui.graphics.drawCircle(0, 0, this.radius);
 		    this.ui.x = this.x;
 		    this.ui.y = this.y;
 		    game.stage.addChild(this.ui);
@@ -240,7 +298,7 @@
     var slotY = stage.height - slotHeight - slotPaddingY;
     for (var i = 0; i < specials.length; i++) {
     	specials[i] = new createjs.Shape();
-	    specials[i].overColor = "#FF0000"
+	    specials[i].overColor = "#FF0000";
 	    specials[i].outColor = color;
 	    specials[i].graphics
 		    .beginFill(color)
@@ -248,16 +306,21 @@
 		    .endFill();
 	    stage.addChild(specials[i]);
 	    slotX += (slotPaddingX + slotWidth);
-    };
+    }
 
 	//game.stage.update();
-
-
+	var annoying = [];
     function environmentTick(e) {
 
-        !window.game.environment.cycle.started && (window.game.environment.cycle.start());
-
+        window.game.environment.cycle.update();
         game.stage.update(e);
+    }
+
+    function annoy(num){
+    	if(annoying.indexOf(num) == -1){
+    		annoying.push(num);
+    		alert(num);
+    	}
     }
 })();
 
@@ -286,7 +349,7 @@
         });
 
         return entity;
-    }
+    };
 }());
 
 // ui.js
@@ -312,17 +375,17 @@
             return Math.sqrt(Math.pow(x - this.x, 2) +
                              Math.pow(y - this.y, 2));
         }
-    }
+    };
 }());
 
 // dice.js
 (function() {
-    window.game.dice = {
+    window.game.core.dice = {
         roll: function(quantity, sides) {
         	var critical = false;
     		var fail = false;
         	var q = quantity = Math.max(quantity||1, 1);
-        	sides = Math.max(sides||2, 2)
+        	sides = Math.max(sides||2, 2);
         	var rolls = [];
         	var total = 0;
         	while (q > 0){
@@ -345,7 +408,7 @@
             };
             return this.last;
         }
-    }
+    };
 }());
 
 // damage.js
@@ -357,8 +420,8 @@
         },
         do_damage: function(amount) {
             this.hp += amount;
-        },
-    }
+        }
+    };
 
 }());
 
@@ -373,7 +436,7 @@
         do_move: function(x, y) {
 
         }
-    }
+    };
 }());
 
 // set up entities   
