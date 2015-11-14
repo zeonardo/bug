@@ -12,3 +12,6 @@ https://en.wikipedia.org/wiki/Alignment_(Dungeons_%26_Dragons)
 
 Tweenjs Animation
 http://jsfiddle.net/lannymcnie/qEYD4/1/
+
+Colors!! :D
+http://www.w3schools.com/tags/ref_colorpicker.asp

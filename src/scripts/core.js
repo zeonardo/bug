@@ -12,6 +12,35 @@
 	        b: parseInt(result[3], 16)
 	    } : null;
 	};
+	window.game.utils.changeToColor = function(command, hexto){
+		var hexfrom = command.style;
+		console.log(command.style);
+		var rgbafrom = window.game.utils.hexToRgba(hexfrom);
+		var rgbato = window.game.utils.hexToRgba(hexto);
+		var rsteps = Math.max(rgbafrom.r, rgbato.r) - Math.min(rgbafrom.r, rgbato.r);
+		var gsteps = Math.max(rgbafrom.g, rgbato.g) - Math.min(rgbafrom.g, rgbato.g);
+		var bsteps = Math.max(rgbafrom.b, rgbato.b) - Math.min(rgbafrom.b, rgbato.b);
+		var maxsteps = Math.max(Math.max(rsteps, gsteps), bsteps);
+
+		var change = [];
+		while(maxsteps > 0){
+
+		}
+
+        var dr = (rgbato.r - rgbafrom.r) / maxsteps, // how much red should be added each time
+        dg = (rgbato.g - rgbafrom.g) / maxsteps, // green
+        db = (rgbato.b - rgbafrom.b) / maxsteps, // blue
+        i = 0, // step counter
+        interval = setInterval(function() {
+            command.style = 'rgb(' + Math.round(rgbafrom.r + dr * i) + ','
+                                   + Math.round(rgbafrom.g + dg * i) + ','
+                                   + Math.round(rgbafrom.b + db * i) + ')';
+            i++;
+            if(i === maxsteps) { // stop if done
+                clearInterval(interval);
+            }
+        }, 30);
+	};
 	window.game.core = {};
 	window.game.core.grid = {
         dimension: 10,
@@ -62,14 +91,19 @@
     	started: false,
 		duration: 60000,
 		days: 0,
+		quarter: 1,
+		tick: function(e) {
+	        window.game.environment.cycle.update(e);
+	        window.game.stage.update(e);
+	    },
 		start: function(){
-			this.ismorning = true;
-			this.isrising = true;
 
+			this.ismorning = false;
 			this.isnoon = false;
 			this.isevening = false;
 			this.istwilight = false;
 			this.issetting = false;
+			this.isrising = false;
 			this.ispeaking = false;
 
 			this.isday = function(){
@@ -80,42 +114,80 @@
 			};
 
 			this.morning = function(){
-				window.game.environment.circle.command.style = '#FFCC00';
-				debug && console.log('morning');
+				var command = window.game.environment.circle.command;
+				//console.log(command.style);
+				//window.game.utils.changeToColor(command, '#ffcc00');
+				//window.game.environment.circle.command.style = '#ffcc00';
+				//debug && console.log('morning');
 			};
 			this.noon = function(){
-				window.game.environment.circle.command.style = '#FFFF41';
-				debug && console.log('noon');
+				var command = window.game.environment.circle.command;
+				//console.log(command.style);
+				//window.game.utils.changeToColor(command, '#ffff41');
+				//window.game.environment.circle.command.style = '#ffff41';
+				//debug && console.log('noon');
 			};
 			this.evening = function(){
-				window.game.environment.circle.command.style = '#E4E4E4';
-				debug && console.log('evening');
+				var command = window.game.environment.circle.command;
+				//console.log(command.style);
+				//window.game.utils.changeToColor(command, '#e4e4e4');
+				//window.game.environment.circle.command.style = '#e4e4e4';
+				//debug && console.log('evening');
 			};
 			this.twilight = function(){
-				window.game.environment.circle.command.style = '#FFFFFF';
-				debug && console.log('twilight');
+				var command = window.game.environment.circle.command;
+				//console.log(command.style);
+				//window.game.utils.changeToColor(command, '#ffffff');
+				//window.game.environment.circle.command.style = '#ffffff';
+				//debug && console.log('twilight');
 			};
 			this.started = true;
 			debug && console.log('cycle started');
+			this.changequarter();//cycle start
 		},
-		quarter: function(event){
-			window.game.environment.cycle.isnoon = window.game.environment.cycle.ismorning;
-		    window.game.environment.cycle.istwilight = window.game.environment.cycle.isevening;
-		    window.game.environment.cycle.ismorning = false;
-		    window.game.environment.cycle.isevening = false;
-		    debug && console.log('it\'s mid' + (window.game.environment.cycle.isnoon ? 'day' : 'night'));
-		},
-		half: function(event){
-			window.game.environment.cycle.ismorning = window.game.environment.cycle.istwilight;
-			window.game.environment.cycle.isevening = window.game.environment.cycle.isnoon;
-			window.game.environment.cycle.isnoon = false;
-			window.game.environment.cycle.istwilight = false;
+		changequarter: function(event){
+			
+			window.game.environment.cycle.ismorning = window.game.environment.cycle.quarter === 1;
+			window.game.environment.cycle.isnoon = window.game.environment.cycle.quarter === 2;
+			window.game.environment.cycle.isevening = window.game.environment.cycle.quarter === 3;
+		    window.game.environment.cycle.istwilight = window.game.environment.cycle.quarter === 4;
 
-			if (window.game.environment.cycle.isday()){
-				window.game.environment.cycle.days++;	
+			if(debug){
+				console.log('quarter: ' + window.game.environment.cycle.quarter);
+				window.game.environment.cycle.ismorning && console.log('ismorning: ' + window.game.environment.cycle.ismorning);
+				window.game.environment.cycle.isnoon && console.log('isnoon: ' + window.game.environment.cycle.isnoon);
+				window.game.environment.cycle.isevening && console.log('isevening: ' + window.game.environment.cycle.isevening);
+				window.game.environment.cycle.istwilight && console.log('istwilight: ' + window.game.environment.cycle.istwilight);
 			}
 
-			debug && window.game.environment.cycle.days > 0 && console.log((window.game.environment.cycle.isday() ? 'day: ' : 'night: ') + window.game.environment.cycle.days);
+		    var command = window.game.environment.circle.command;
+			//console.log(command.style);
+			if(window.game.environment.cycle.ismorning){
+				window.game.environment.cycle.days++;
+				debug && !window.game.environment.cycle.ismorning && console.log('day number: ' + window.game.environment.cycle.days);
+				console.log('(change color for sunrise)');
+				//window.game.utils.changeToColor(command, '#ffcc00');
+			}
+			else if(window.game.environment.cycle.isnoon){
+				console.log('(change color for midday)');
+				//window.game.utils.changeToColor(command, '#ffcc00');
+			}
+			else if(window.game.environment.cycle.isevening){
+				console.log('(change color for moonrise)');
+				//window.game.utils.changeToColor(command, '#ffcc00');
+			}
+			else if(window.game.environment.cycle.istwilight){
+				console.log('(change color for midnight)');
+				//window.game.utils.changeToColor(command, '#e4e4e4');
+			}
+
+			if(window.game.environment.cycle.quarter === 4)
+			{
+				window.game.environment.cycle.quarter = 1;
+			}
+			else{
+				window.game.environment.cycle.quarter++;
+			}
 		},
 		update: function(event){
 			if(!this.started){
@@ -157,9 +229,9 @@
 	//debug && (window.game.environment.cycle.duration /= 8);
 
 	window.game.environment.ticker = createjs.Ticker;
-    window.game.environment.ticker.addEventListener("tick", environmentTick);
     window.game.environment.ticker.setFPS(window.game.environment.fps);
     window.game.environment.ticker.maxDelta = window.game.environment.fps + (window.game.environment.fps / 2);
+    window.game.environment.ticker.addEventListener("tick", window.game.environment.cycle.tick);
 
 	window.game.language = {
 		available: [
@@ -255,7 +327,7 @@
     	width: 100,
     	height: 100,
     	get radius(){ return (this.width / 2); },
-    	get x(){ return (window.game.stage.width - this.radius); },
+    	get x(){ return (window.game.stage.width); },
     	get y(){ return (window.game.environment.sky.height + this.radius); },
     	color: '#FFCC00',
     	ui: new createjs.Shape(),
@@ -278,7 +350,7 @@
 					trajectory.graphics.beginStroke("#666")
 						.moveTo(this.x_end, this.y_end)
 						.curveTo(this.curve_start, this.curve_end, this.curve_mid, this.y_mid)
-						.curveTo(this.y_mid, this.curve_end, this.x_start, this.curve_mid);
+						.curveTo(this.y_mid, this.curve_end, this.x_start, this.curve_mid + this.y_mid);
 					game.stage.addChild(trajectory);
 				},
 				animate: function(){
@@ -288,21 +360,22 @@
 							this.x_end, this.y_end,
 							this.curve_start, this.curve_end, this.curve_mid, this.y_mid
 						]}}, window.game.environment.cycle.duration / 2)
-					.call(window.game.environment.cycle.quarter)//midway
+					.call(window.game.environment.cycle.changequarter)//midway
 					.to({guide:{path:[
 							this.curve_mid, this.y_mid,
-							this.y_mid, this.curve_end, this.x_start, this.curve_mid
+							this.y_mid, this.curve_end, this.x_start, this.curve_mid + this.y_mid
 						]}}, window.game.environment.cycle.duration / 2)
-					.call(window.game.environment.cycle.half);//cycle end
+					.call(window.game.environment.cycle.changequarter);//cycle end
+
 				}
 	    	};
 
-		    debug && this.path.render();
 
 		    this.command = this.ui.graphics.beginFill("#FFCC00").command;
 		    this.ui.graphics.drawCircle(0, 0, this.radius);
 		    this.ui.x = this.x;
 		    this.ui.y = this.y;
+		    debug && this.path.render();
 		    game.stage.addChild(this.ui);
 
 		    this.path.animate();
@@ -341,20 +414,6 @@
 	    slotX += (slotPaddingX + slotWidth);
     }
 
-	//game.stage.update();
-	var annoying = [];
-    function environmentTick(e) {
-
-        window.game.environment.cycle.update();
-        game.stage.update(e);
-    }
-
-    function annoy(num){
-    	if(annoying.indexOf(num) == -1){
-    		annoying.push(num);
-    		alert(num);
-    	}
-    }
 })();
 
 
