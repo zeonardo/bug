@@ -1,6 +1,17 @@
 (function(){
 	window.debug = true;
 	window.game = {};
+	window.game.utils = {};
+	window.game.utils.hexToRgba = function(hex){
+	    hex = (hex || '#ffffff').replace('#','').toLowerCase();
+
+	    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+	    return result ? {
+	        r: parseInt(result[1], 16),
+	        g: parseInt(result[2], 16),
+	        b: parseInt(result[3], 16)
+	    } : null;
+	};
 	window.game.core = {};
 	window.game.core.grid = {
         dimension: 10,
@@ -53,9 +64,13 @@
 		days: 0,
 		start: function(){
 			this.ismorning = true;
+			this.isrising = true;
+
 			this.isnoon = false;
 			this.isevening = false;
 			this.istwilight = false;
+			this.issetting = false;
+			this.ispeaking = false;
 
 			this.isday = function(){
 				return this.ismorning || this.isnoon;
@@ -83,46 +98,60 @@
 			this.started = true;
 			debug && console.log('cycle started');
 		},
-		change: function(event){
+		quarter: function(event){
+			window.game.environment.cycle.isnoon = window.game.environment.cycle.ismorning;
+		    window.game.environment.cycle.istwilight = window.game.environment.cycle.isevening;
+		    window.game.environment.cycle.ismorning = false;
+		    window.game.environment.cycle.isevening = false;
+		    debug && console.log('it\'s mid' + (window.game.environment.cycle.isnoon ? 'day' : 'night'));
+		},
+		half: function(event){
 			window.game.environment.cycle.ismorning = window.game.environment.cycle.istwilight;
 			window.game.environment.cycle.isevening = window.game.environment.cycle.isnoon;
 			window.game.environment.cycle.isnoon = false;
 			window.game.environment.cycle.istwilight = false;
 
-			if (window.game.environment.cycle.morning){
+			if (window.game.environment.cycle.isday()){
 				window.game.environment.cycle.days++;	
 			}
 
-			debug && console.log((window.game.environment.cycle.isday() ? 'day: ' : 'night: ') + window.game.environment.cycle.days);
+			debug && window.game.environment.cycle.days > 0 && console.log((window.game.environment.cycle.isday() ? 'day: ' : 'night: ') + window.game.environment.cycle.days);
 		},
-		update: function(){
+		update: function(event){
 			if(!this.started){
 				this.start();
 			}
 
-			this.circle_rising = game.environment.circle.ui.globalToLocal(window.game.stage.width - game.environment.circle.radius-1, 0);
+			this.circle_rising = game.environment.circle.ui.globalToLocal(window.game.stage.width, 0);
 	        this.circle_peak = game.environment.circle.ui.globalToLocal((window.game.stage.width / 2), 0);
-	        this.circle_setting = game.environment.circle.ui.globalToLocal(game.environment.circle.radius-1, 0);
+	        this.circle_setting = game.environment.circle.ui.globalToLocal(0, 0);
 			
 			if (game.environment.circle.ui.hitTest(this.circle_rising.x, 0)) {
-			    console.log((this.isday() ? 'sun' : 'moon') + ' rising');
+				if (!this.isrising){
+					this.isrising = true;
+			    	debug && console.log('the ' + (this.isday() ? 'sun' : 'moon') + ' is rising');
+				}
 			} else if (game.environment.circle.ui.hitTest(this.circle_peak.x, 0)) {
-				if(this.isrise()){
-				    this.isnoon = this.ismorning;
-				    this.istwilight = this.isevening;
-				    this.ismorning = false;
-				    this.isevening = false;
-				    console.log('mid' + (this.isnoon ? 'day' : 'night'));
+				if (!this.ispeaking) {
+					this.ispeaking = true;
 				}
 			}
 			else if (game.environment.circle.ui.hitTest(this.circle_setting.x, 0)) {
-			    console.log((this.isday() ? 'sun' : 'moon') + ' setting');
+				if (!this.issetting){
+					this.issetting = true;
+			    	debug && console.log('the ' + (this.isday() ? 'sun' : 'moon') + ' is setting');
+				}
+			}
+			else{
+				this.isrising = false;
+				this.issetting = false;
+				this.ispeaking = false;
 			}
 
-			// this.ismorning && this.morning();
-			// this.isnoon && this.noon();
-			// this.isevening && this.evening();
-			// this.istwilight && this.twilight();
+			this.ismorning && this.morning();
+			this.isnoon && this.noon();
+			this.isevening && this.evening();
+			this.istwilight && this.twilight();
 		}
 	};
 	//debug && (window.game.environment.cycle.duration /= 8);
@@ -237,30 +266,34 @@
 				index: _this.index - 1,
 	    		get x_start(){ return (0); },
 				get x_end(){ return (window.game.stage.width); },
-				y_start: window.game.environment.sky.height + (_this.height / 2),
-				y_end: window.game.environment.sky.height + (_this.height / 2),
-				get curve_start(){ return (window.game.stage.width / 2);},
-				get curve_end(){ return (this.curve_start - window.game.stage.width); },
+				y_start: window.game.environment.sky.height + _this.radius,
+				y_mid: _this.radius,
+				y_end: window.game.environment.sky.height + _this.radius,
+				get curve_start(){ return (window.game.stage.width  - _this.radius);},
+				get curve_mid(){ return (window.game.stage.width / 2); },
+				get curve_end(){ return (_this.radius); },
 				ui: new createjs.Shape(),
 				render: function(){
 					var trajectory = new createjs.Shape();
 					trajectory.graphics.beginStroke("#666")
 						.moveTo(this.x_end, this.y_end)
-						.curveTo(this.curve_start, this.curve_end, this.x_start, this.y_start);
+						.curveTo(this.curve_start, this.curve_end, this.curve_mid, this.y_mid)
+						.curveTo(this.y_mid, this.curve_end, this.x_start, this.curve_mid);
 					game.stage.addChild(trajectory);
 				},
 				animate: function(){
 					createjs.MotionGuidePlugin.install();
 					createjs.Tween.get(_this.ui, { loop:true })
-					.to({
-						guide:{
-							path:[
-								this.x_end, this.y_end,
-								this.curve_start, this.curve_end, this.x_start, this.y_start
-							]
-						}
-					}, window.game.environment.cycle.duration)
-					.call(window.game.environment.cycle.change);
+					.to({guide:{path:[
+							this.x_end, this.y_end,
+							this.curve_start, this.curve_end, this.curve_mid, this.y_mid
+						]}}, window.game.environment.cycle.duration / 2)
+					.call(window.game.environment.cycle.quarter)//midway
+					.to({guide:{path:[
+							this.curve_mid, this.y_mid,
+							this.y_mid, this.curve_end, this.x_start, this.curve_mid
+						]}}, window.game.environment.cycle.duration / 2)
+					.call(window.game.environment.cycle.half);//cycle end
 				}
 	    	};
 
