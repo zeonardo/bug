@@ -15,3 +15,8 @@ http://jsfiddle.net/lannymcnie/qEYD4/1/
 
 Colors!! :D
 http://www.w3schools.com/tags/ref_colorpicker.asp
+
+Material design pallete
+**http://www.materialui.co/colors
+*https://www.google.com/design/spec/style/color.html
+https://www.materialpalette.com/

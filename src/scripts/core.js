@@ -1,7 +1,13 @@
-(function(){
-	window.debug = false;
+//TODO: clean this mess
+(function() {
+	window.debug = true;
 	window.game = {};
 	window.game.utils = {};
+	window.game.core = {};
+}());
+
+// core
+(function() {
 	window.game.utils.hexToRgba = function(hex){
 	    hex = (hex || '#ffffff').replace('#','').toLowerCase();
 
@@ -61,7 +67,12 @@
 		var cb = null;
 		if(rgbathen){
 			cb = function(){
-				rgbathen && window.game.utils.changeColor(command, rgbato, rgbathen, duration, false);
+				if(rgbathen){
+					setTimeout(function(){
+
+						window.game.utils.changeColor(command, rgbato, rgbathen, duration / 2, false);
+					}, duration / 2);
+				}
 			};
 		}
 
@@ -122,7 +133,6 @@
 
 		return result;
 	};
-	window.game.core = {};
 	window.game.core.grid = {
         dimension: 10,
         render: function(){
@@ -165,9 +175,44 @@
             game.stage.addChild(trajectory);
         }
     };
+    window.game.core.dice = {
+        roll: function(sides, quantity) {
+        	var critical = false;
+    		var fail = false;
+        	var q = quantity = Math.max(quantity||1, 1);
+        	sides = Math.max(sides||2, 2);
+        	var rolls = [];
+        	var total = 0;
+        	while (q > 0){
+        		q--;
+        		var roll = Math.floor(Math.random() * sides + 1);
+        		total += roll;
+        		rolls.push(roll);
+        	}
 
+
+        	critical = (quantity * sides) === total;
+        	fail = quantity === total;
+        	debug && !this.last && console.log('rolls '+quantity+'d'+sides+': ' +rolls.join('+')+((quantity > 1) ? ('='+total) : ''));
+        	this.last = {
+            	rolls: rolls,
+            	result: Math.max(Math.round(total), 1),
+            	critical: critical,
+            	fail: fail
+            };
+            return this.last;
+        }
+    };
+}());
+
+(function(){
 	window.game.environment = {
-		stopped: false
+		stopped: false,
+		remove: function(e){
+			window.game.stage.removeChild(e.target);
+		}
+	};
+	window.game.environment.landscape = {
 	};
 	window.game.environment.start = function(){
 		this.fps = 30;
@@ -177,7 +222,8 @@
 	    this.ticker.maxDelta = this.fps + (this.fps / 2);
 	    this.ticker.addEventListener("tick", this.cycle.tick);
 
-		game.environment.sky.render();
+	    game.environment.weather.start();
+		game.environment.sky.start();
 		game.environment.circle.render();
 		game.environment.land.render();
 		game.environment.bar.render();
@@ -250,6 +296,7 @@
 		},
 		changequarter: function(event){
 			
+			//TODO: dismember day cycle from circle. duh!
 			window.game.environment.cycle.ismorning = window.game.environment.cycle.quarter === 1;
 			window.game.environment.cycle.isnoon = window.game.environment.cycle.quarter === 2;
 			window.game.environment.cycle.isevening = window.game.environment.cycle.quarter === 3;
@@ -263,15 +310,19 @@
 				window.game.environment.cycle.istwilight && console.log('istwilight: ' + window.game.environment.cycle.istwilight);
 			}
 
-	    	var command = window.game.environment.circle.command;
+	    	var circle = window.game.environment.circle;
+	    	var sky = window.game.environment.sky;
+
 			if(window.game.environment.cycle.ismorning){
 				window.game.environment.cycle.days++;
-				debug && window.game.environment.cycle.ismorning && console.log('day number: ' + window.game.environment.cycle.days);
-				window.game.utils.changeToColor(command,
-					window.game.environment.circle.sun.colorfrom,
-					window.game.environment.circle.sun.colorto,
-					window.game.environment.circle.sun.colorfrom,
-					2);
+
+				var colorfrom = window.game.environment.circle.sun.colorfrom;
+				var colorto = window.game.environment.circle.sun.colorto;
+				
+				debug && console.log('day number: ' + window.game.environment.cycle.days);
+
+				window.game.utils.changeToColor(circle.command, null, colorto, null, 2);
+				//window.game.utils.changeToColor(sky.command, null, sky.day, null, 2);
 			}
 			else if(window.game.environment.cycle.isnoon){
 				// midday
@@ -290,10 +341,24 @@
 					colorfrom = window.game.environment.circle.moon.blue;
 				}
 
-				window.game.utils.changeToColor(command, colorfrom, colorto, window.game.environment.circle.moon.colorfrom, 2);
+				window.game.utils.changeToColor(circle.command, null, colorfrom, null, 2);
+				//window.game.utils.changeToColor(sky.command, null, sky.day, null, 2);
 			}
 			else if(window.game.environment.cycle.istwilight){
 				// midnight
+			}
+
+			if(window.game.environment.cycle.ismorning || window.game.environment.cycle.isevening){
+
+				// createjs.Tween.get(sky.ui)
+				// 	.to({alpha:window.game.environment.weather.current.sky.opacity}, window.game.environment.cycle.duration / 8);
+
+				createjs.Tween.get(circle.ui)
+				.to({
+					alpha:window.game.environment.weather.current.sky.opacity,
+					scaleX:window.game.environment.weather.current.sky.scale,
+					scaleY:window.game.environment.weather.current.sky.scale
+				}, window.game.environment.cycle.duration / 8);
 			}
 
 			if(window.game.environment.cycle.quarter === 4)
@@ -353,7 +418,7 @@
 		},
 		start: function(){
 			this.started = true;
-			//this.forecast.update();
+			this.forecast.update();
 		},
 		update: function(){
 			if (this.stopped){
@@ -371,11 +436,17 @@
 			}
 			var influenced = influence_before.length + influence_after.length > 1;
 
-
+			//TODO: randomize!!
 			window.game.environment.weather['cloud'].start(this.current);
+			window.game.environment.weather['rainbow'].start(this.current);
 
+
+			if(influence_before && window.game.core.dice.roll(6).critical){
+
+				debug && console.log('WOW! critical change in the wind. from ' + (this.wind.east ? 'east-north' : 'north-east') + 'to' +  (!this.wind.east ? 'east-north' : 'north-east'));
+				this.wind.east = influence_before && window.game.core.dice.roll(6).critical;
+			}
 			window.game.environment.weather.current.duration--;
-
 		},
 		forecast: {
 			previous: null,
@@ -434,10 +505,11 @@
 				after:[],
 				duration: 4,
 				sky: {
-					opacity: 0.6,
-					day: '#66ffff',
-					night: '#006363',
+					opacity: 0.5,
+					day: '#42a5f5',
+					night: '#3f51b5',
 					cloud: '#ffffff',
+					scale: 1.2,
 					star: 12
 				},
 				icon: 'sun'
@@ -450,10 +522,11 @@
 				after:['cloud'],
 				duration: 3,
 				sky: {
-					opacity: 0.7,
-					day: '#33CCFF',
-					night: '#004258',
-					cloud: '#f2f2f2',
+					opacity: 0.65,
+					day: '#448aff',
+					night: '#4527a0',
+					cloud: '#e8eaf6',
+					scale: 1,
 					star: 8
 				},
 				icon: 'sun and cloud'
@@ -467,9 +540,10 @@
 				duration: 2,
 				sky: {
 					opacity: 0.8,
-					day: '#6787b8',
-					night: '#16202f',
-					cloud: '#8585ad',
+					day: '#e0e0e0',
+					night: '#424242',
+					cloud: '#263238',
+					scale: 0.8,
 					star: 4
 				},
 				icon: 'cloud and rain'
@@ -482,10 +556,11 @@
 				after:['rainbow', 'cloud', 'fog'],
 				duration: 1,
 				sky: {
-					opacity: 0.9,
-					day: '#787878',
-					night: '#0d0d0d',
-					cloud: '#3d3d5c',
+					opacity: 0.95,
+					day: '#b0bec5',
+					night: '#263238',
+					cloud: '#424242',
+					scale: 0.6,
 					star: 0
 				},
 				icon: 'cloud and lightning'
@@ -555,21 +630,24 @@
 				
 				nimbus.y = (window.game.environment.sky.height / 2) / window.game.core.dice.roll(climate.index).result;
 				nimbus.alpha = climate.sky.opacity;
+				nimbus.shadow = new createjs.Shadow("#000000", climate.index, climate.index, climate);
 				game.stage.addChild(nimbus);
 
 				var speed = (window.game.environment.cycle.duration / 4) + (window.game.core.dice.roll(climate.index).result * 500);
-				nimbus.x = 0 - this.base.width;
+				var wait =  speed / 4;
 				var moveto = 0 - this.base.width;
+				nimbus.x = 0 - this.base.width;
 				if(!window.game.environment.weather.wind.east){
 				 	nimbus.scaleX = -1;
 				 	nimbus.x = 0 - this.base.width;
 				 	window.game.stage.width + this.base.width
+				 	moveto = 800 + this.base.width;
 				}
 				else{
 					nimbus.x = 800 + this.base.width;
 				}
 				createjs.Tween.get(nimbus)
-					.wait(window.game.core.dice.roll(20).result * 100)
+					.wait(window.game.core.dice.roll(100).result * 100)
 					.to({x:moveto}, speed)
 					.call(game.environment.weather.cloud.remove);
 
@@ -582,18 +660,91 @@
 			speed: 1
 		},
 		rain:{
+			// rain
 		},
 		storm: {
+			// rain + rain
 			start: function(){},
 			stop: function(){}
 		},
 		rainbow: {
+			started: false,
+			ui: new createjs.Container(),
+			magic: function(){
+				this.start();
+				this.update();
+
+				var text = new createjs.Text("Magic!", "40px Arial", "#fff");
+				text.x = game.stage.width / 2;
+				text.y = game.stage.height / 2;
+				text.textBaseline = "alphabetic";
+				text.shadow = new createjs.Shadow("#000000", 1, 1, 10);
+				stage.addChild(text);
+			},
+			start: function(){
+				this.started = true;
+				this.width = 100;
+				this.radius = (this.width / 2);
+				this.x =  (window.game.stage.width);
+				this.y =  (window.game.environment.sky.height + this.radius);
+				this.x_start = 0;
+				this.x_end = window.game.stage.width;
+				this.y_start = window.game.environment.sky.height + this.radius;
+				this.y_mid = this.radius;
+				this.y_end = window.game.environment.sky.height + this.radius;
+				this.curve_start =  window.game.stage.width  - this.radius;
+				this.curve_mid =  window.game.stage.width / 2;
+				this.curve_end =  this.radius;
+				this.thickness = 40;
+				this.colors = ['#f44336', '#ff9800', '#ffeb3b', '#4caf50', '#2196F3', '#3f51b5', '#9c27b0'];
+				this.render(this.colors);
+			},
+			update: function(){
+			},
+			render: function(colors){
+
+				
+				for (var i = 0; i < colors.length; i++) {
+					var line = new createjs.Shape();
+					line.graphics.setStrokeStyle(this.thickness)
+					.beginStroke(colors[i])
+					.moveTo(this.x_end, this.y_end)
+					.curveTo(this.curve_start, this.curve_end, this.curve_mid, this.y_mid)
+					.curveTo(this.y_mid, this.curve_end, this.x_start, this.curve_mid + this.y_mid)
+					.endStroke();
+
+					this.ui.addChild(line);
+
+					this.x_start+=40;
+					this.y_start+=40;
+					this.curve_start -=20;
+					this.curve_mid -= 20;
+					this.curve_end +=20;
+					this.y_mid += 20;
+					this.x_end-=40;
+
+					// this.ui.graphics
+					// .beginStroke(colors[i])
+					// .moveTo(this.x_end, )
+					// .curveTo(this.curve_start, this.curve_end, this.curve_mid, this.y_mid)
+					// .curveTo(this.y_mid, this.curve_end, this.x_start, this.curve_mid + this.y_mid);
+					// this.ui.graphics.endStroke()
+					// game.stage.addChildAt(this.ui, 3);
+				}
+				game.stage.addChildAt(this.ui, 3);
+
+
+    				
+			}
 		},
 		thunder: {
+			// get cloud by ID?
 		},
 		snow: {
+			// check for clouds?
 		},
 		fog: {
+			//after or before rain
 		}
 	};
 
@@ -636,6 +787,7 @@
 			    .beginFill(this.ui.outColor)
 			    .drawRect(this.x, this.y, this.width, this.height)
 			    .endFill();//( [x=0]  [y=0]  [width=0]  [height=0] )
+		    this.ui.shadow = new createjs.Shadow("#000000", -2, -2, 10);
 		    game.stage.addChild(this.ui);
     	}
     };
@@ -654,34 +806,49 @@
 			    .beginFill(this.color)
 			    .drawRect(this.x, this.y, this.width, this.height)
 			    .endFill();// ( [x=0]  [y=0]  [width=0]  [height=0] )
+		    this.ui.shadow = new createjs.Shadow("#000000", 0, 0, 10);
 		    game.stage.addChild(this.ui);
     	}
     };
 
     // sky
     game.environment.sky = {
+    	started: false,
     	index: 0,
     	width: window.game.stage.width,
     	get height() { return window.game.stage.height - window.game.environment.bar.height - window.game.environment.land.height; },
     	x: 0,
     	y: 0,
-    	color: ["#000066","#3385FF", "#9C9CFF"],
+    	color: '#66ffff',
     	ui: new createjs.Shape(),
-	    render: function(){
-	    	this.ui.graphics
-	    	/*
-	    	colors Array: An array of CSS compatible color values. For example, ["#F00","#00F"] would define a gradient drawing from red to blue.
-			ratios Array: An array of gradient positions which correspond to the colors. For example, [0.1, 0.9] would draw the first color to 10% then interpolating to the second color at 90%.
-			x0 Number: The position of the first point defining the line that defines the gradient direction and size.
-			y0 Number: The position of the first point defining the line that defines the gradient direction and size.
-			x1 Number: The position of the second point defining the line that defines the gradient direction and size.
-			y1 Number: The position of the second point defining the line that defines the gradient direction and size.
-	    	*/
-		    .beginLinearGradientFill(this.color, [0, 0.7, 1], 0, 100, 0, this.height)
-		    .drawRect(this.x, this.y, this.width, this.height)
-		    .endFill();// ( [x=0]  [y=0]  [width=0]  [height=0] )
+    	command: {},
+		stop: function(){
+			this.started = false;
+		},
+    	start: function(){
+    		this.started = true;
+    		this.update();
+    	},
+    	update: function(color){
+    		this.render(color);
+    		window.game.utils.changeToColor(this.command, null, color || window.game.environment.weather.current.sky.day, null, 2);
+    	},
+	    render: function(color){
+	    	color = color || this.color;
+    		this.command = this.ui.graphics.beginFill(color).command;
+		    this.ui.graphics.drawRect(this.x, this.y, this.width, this.height)
+		    .endFill();
 	    	game.stage.addChild(this.ui);
 	    }
+    	/*
+    	colors Array: An array of CSS compatible color values. For example, ["#F00","#00F"] would define a gradient drawing from red to blue.
+		ratios Array: An array of gradient positions which correspond to the colors. For example, [0.1, 0.9] would draw the first color to 10% then interpolating to the second color at 90%.
+		x0 Number: The position of the first point defining the line that defines the gradient direction and size.
+		y0 Number: The position of the first point defining the line that defines the gradient direction and size.
+		x1 Number: The position of the second point defining the line that defines the gradient direction and size.
+		y1 Number: The position of the second point defining the line that defines the gradient direction and size.
+	    //.beginLinearGradientFill(this.color, [0, 0.7, 1], 0, 100, 0, this.height)
+    	*/
     };
 
 
@@ -693,17 +860,17 @@
     	get radius(){ return (this.width / 2); },
     	get x(){ return (window.game.stage.width); },
     	get y(){ return (window.game.environment.sky.height + this.radius); },
+    	ui: new createjs.Shape(),
     	sun: {
-    		colorfrom: '#ffa347',
-    		colorto: '#ffff0b',
+    		colorfrom: '#f57f17',
+    		colorto: '#ffeb3b',
     	},
     	moon: {
-    		colorfrom: '#c9c9c9',
-    		colorto: '#f8f8f8',
-    		bloody: '#ff1a1a',
-    		blue: '#3399ff'
+    		colorfrom: '#B0BEC5',
+    		colorto: '#ede7f6',
+    		bloody: '#f44336',
+    		blue: '#2196f3'
     	},
-    	ui: new createjs.Shape(),
     	render: function(){
 
 		    var _this = this;
@@ -812,37 +979,7 @@
     };
 }());
 
-// dice.js
-(function() {
-    window.game.core.dice = {
-        roll: function(sides, quantity) {
-        	var critical = false;
-    		var fail = false;
-        	var q = quantity = Math.max(quantity||1, 1);
-        	sides = Math.max(sides||2, 2);
-        	var rolls = [];
-        	var total = 0;
-        	while (q > 0){
-        		q--;
-        		var roll = Math.floor(Math.random() * sides + 1);
-        		total += roll;
-        		rolls.push(roll);
-        	}
-        	debug && console.log('rolls '+quantity+'d'+sides+': ' +rolls.join('+')+
-        		((quantity > 1) ? ('='+total) : ''));
 
-        	critical = (quantity * sides) === total;
-        	fail = quantity === total;
-        	this.last = {
-            	rolls: rolls,
-            	result: Math.max(Math.round(total), 1),
-            	critical: critical,
-            	fail: fail
-            };
-            return this.last;
-        }
-    };
-}());
 
 // damage.js
 (function() {
