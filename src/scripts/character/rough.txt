@@ -1,17 +1,52 @@
 Fighter	Scorpion: Chaotic Neutral
 Attack	Defense	Stamina	Agility	Power
+DPS + Tank
+Neutral Good
+Base color: red, white
+Appearance: female?, long hair, young, light-armored, 
+Personality: resourceful, flirty, joker, loud, persuasive, cocky
+Weapons: big sword, multiple, medium shield?
 
+--------------------
 Paladin	Beetle: Lawful Neautral
 Defense	Stamina	Power	Attack	Agility
+Tank + Support
+Lawful Good
+Base color: blue, black
+Appearance: female?, bound hair, older, sturdy, heavily armored, large, good-humored, incredibly strong
+Personality: calm, chivalrous, reliable, caring, protective
+Weapons: huge shield, glove/gauntlet, axe, body
 
+--------------------
 Cleric	Butterfly: Lawful Good
 Stamina	Power	Agility	Defense	Attack
+Support + Tank
+Lawful Neutral
+Base color: green, brown
+Appearance: male, young, dreadlocks?, few clothes, tribal
+Personality: laid-back, apathetic, quiet, friendly, never surprised, very wise, hidden power (metamorphosys?), hard to hit (ellusive)
+Weapons: any (illusion/invocation)
 
+--------------------
 Wizard	Bee: Neutral Good
 Power	Agility	Attack	Stamina	Defense
+Support + DPS
+Chaotic Good
+Base color: yellow, gray
+Appearance: female, teen, blond, short hair, airborn/aviator?, mobile
+Personality: foul-mouthed, short-tempered, good-humored, self-confident, jumps to action, independent
+Weapons: none/magic, bow, staff, polearm
 
+--------------------
 Rogue	Spider: Chaotic Evil
 Agility	Attack	Defense	Power	Stamina
+DPS + Support
+Chaotic Evil
+Base color: black, purple
+Appearance: male?, skinny, preteen/kid, dark clothes
+Personality: acid, sarcastic, cautious, deadly, sneaky, unpredictable, nimble
+Weapons: guns, short sword, dagger, kunai, throwing weapons
+
 -----------------------------------------------------------
 Ranger		???:	???
 Barbarian	Ant:	???
